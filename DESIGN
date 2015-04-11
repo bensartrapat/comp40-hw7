@@ -1,0 +1,334 @@
+Assignment 6 DESIGN
+Name: Nga Pham, Sartrapat Saengcharoentrakul
+Username: npham02, ssaeng01
+Date: 03/28/15
+
+--------------------------------- Architecture --------------------------------
+
+We will create five different modules: 
+
+        - headquarter.c: It handles input and acts as the center that calls
+          functions from different modules listed below.
+        - um_memory.h: Manages UM memory access, creates and deletes
+          segmented memory, stores/loads segmented memory and registers,
+          accesses values stored in segments and registers. 
+          sets up and initializes the memory by calling functions
+          from um_memory.h, and calls execute function from the emulator.h.
+        - emulator.h: Accesses the words in segment 0 and unpacks the words by
+          using parsing.h. Given the offcode from parsing.h, it calls
+          instructions.h when appropriate.
+        - parsing.h: Uses um_memory.h and bitpack.h to get the offcode and
+          registers' information.
+        - instructions.h: has a list of instructions that the UM can do.
+
+
+----------------------------------- Interface ---------------------------------
+
+******************************** headquarter.c ********************************
+
+General Purpose:
+
+        - Handles input file, stdin, and error message if input is invalid
+        - Main function
+
+Functions:
+
+        It has main(), which does the things mentioned above
+
+********************************** um_memory.h ********************************
+
+--- General Purpose --- 
+
+        Represents registers and segmented memory in the UM. Supports 
+        creation, deletion and access to segmented and registers. 
+
+--- Data type ---  
+
+        umMem_T: represents the UM memory. For more description about what it
+        contains, look at implementation. 
+        ID: the index of the segment or the register
+        instruction: each um instruction is represented in a uint32_t
+        
+--- Functions ---
+
+T program_init(FILE *input):
+        Reads the input (the program) and put it in segment 0. Returns umMem_T.
+
+void program_free(umMem_T *memory);
+        Free memory, all registers and segments
+        
+void segment_map(umMem_T memory, int ID, int length): 
+        Creates a segment with given length at ID
+
+void segment_unmap(umMem_T memory, int ID): 
+        Clears the segment at ID
+
+bool segment_isEmpty(umMem_T memory, int ID): 
+        Checks whether a segment exists at ID or not
+        
+int segment_length(umMem_T memory, int ID):
+        Returns the length of a segment at given ID
+
+uint32_t segment_get(umMem_T memory, int ID, int offset): 
+        Gets the data stored in segment at ID at given offset
+
+void segment_put(umMem_T memory, int ID, int offset, uint32_t instruction):
+        Puts the value in a segment at the given ID and offset
+
+uint32_t register_get(umMem_T memory, int ID):
+        Gets the data stored in the ID register
+
+void register_put(umMem_T memory, int ID, uint32_t value):
+        Puts the value in a register at the given ID
+        
+int progCounter_get(umMem_T memory):
+        Returns the program counter 
+
+void progCounter_update(umMem_T memory, int value):
+        Updates the program counter
+
+ 
+********************************** emulator.h *********************************
+
+--- General Purpose ---
+
+        - Loop through each instructions in segment 0 of the memory 
+        - For each instruction, get the opcode, rA, rB, rC value by calling 
+          functions from parsing.h 
+        - Given the opcode, calls appropriate function in the instructions.h
+
+--- Function --- only one public function 
+
+void execute(umMem_T memory):
+        For each instruction in memory, call UM functions accordingly
+
+
+********************************** parsing.h **********************************
+
+--- General Purpose ---
+        - Translate the program and the input into messages that our emulator
+          will understand by using bitpack.h 
+
+--- Functions ---
+
+int opcode(uint32_t word):
+        Extract opcode from the word
+
+int rA(uint32_t word):
+        Extract rA from the word
+
+int rB(uint32_t word):
+        Extract rB from the word
+
+int rC(uint32_t word):
+        Extract rC from the word
+        
+If opcode is 13, use these functions to retrieve the value
+int opcode_13_rA(uint32_t word):
+        Extract rA from the word
+
+int opcode_13_value(uint32_t word):
+        Extract the value from the word
+
+
+******************************** instructions.h *******************************
+
+--- General Purpose ---
+
+        - Collection of 14 instructions that the UM recognizes
+        
+--- Functions ---
+        
+void conditional_move(UArray_T registerList, int A, int B, int C):
+        If the value at register C is not 0, then the value at register A is
+        the value at register B
+
+void segmented_load(Table_T segmentList, UArray_T registerList, 
+                           int A, int B, int C):
+        Get the value stored in segment r[b], offset r[C] and store it in
+        register A
+
+void segmented_store(Table_T segmentList, UArray_T registerList, 
+                            int A, int B, int C):
+        Put the value in register C into segment r[A], offset r[B]          
+
+void addition(UArray_T registerList, int A, int B, int C):
+        Adds the values stored at B and C and store the result at register A
+
+void multiplication(UArray_T registerList, int A, int B, int C):
+        Multiples the values stored at B and C and store the result at
+        register A
+
+void division(UArray_T registerList, int A, int B, int C):
+        Divides B with C and store the result at register A
+
+void bitwise_NAND(UArray_T registerList, int A, int B, int C):
+        Bitwise operation NAND on values stored in registers B and C and store
+        the value at register A 
+        
+void halt():
+        Stops the computation
+
+void map_segment(Table_T segmentList, UArray_T registerList, 
+                        int B, int C):
+        Create a segment with the given length from register C. The new
+        segment is mapped as segment r[B].
+
+void unmap_segment(Table_T segmentList, UArray_T registerList, int C):
+        Segment at r[C] is unmapped
+
+void output(UArray_T registerList, int C):
+        Stdout value from register C 
+
+void input(UArray_T registerList, int C):
+        Stores input taken from stdin into register C
+
+void load_program(Table_T segmentList, UArray_T registerList, 
+                         int program_counter, int B, int C):
+        Loads a new program to segment 0 and set the program counter to the
+        value at segment 0, offset value at register C
+         
+void load_value(UArray_T registerList, int A):
+        Stores the value (bits after 3 bits away from the opcode) at r[A]
+
+--------------------------------- Implementation ------------------------------
+
+        Declared Data Types:
+        
+        struct umMem {
+                Table_T segmentTable;   /* Table of UArrays of size uint32_t */
+                UArray_T registerList;  /* UArray of uint32_t */
+                int progCounter;
+        } *umMem_T;
+
+        Explanations:
+        
+        - umMem: represents the UM memory, including segments and registers
+        - segmentTable: Table of memory segments, in which key is segment ID, 
+                        value is the actual memory segment. Each memory segment
+                        is represented as a UArray of uint32_t. 
+        - registerList: UArray of of 8 registers of size uint32_t 
+        - progCounter: what instruction we are in the program 
+                
+        Representation Invariants:
+        
+        - umMem: 
+                When the program runs, only one umMem will be created. When the 
+                program terminates, the umMem shall be freed. 
+                
+        - segmentTable:
+                Each segment ID is mapped to at most one segment. Each segment 
+                has exactly one ID. It is a bijection between ID and segment. 
+                Each word stored in memory segments has to be a valid 32 bit 
+                instruction. 
+                 
+        - UArray_T registerList:
+                At most one value shall be stored at a register at any moment. 
+         
+        - progCounter:
+                While the program runs, progCounter is always bigger than or 
+                equal to 0 and smaller than the program length.
+                 
+
+Private functions:
+
+        headquater.c has one private function: 
+                FILE* getFile(int argc, char *argv[]), which gets the filepath
+        
+        emulator.c has one private function: 
+                static void call_instruction(umMem_T memory, uint32_t word), 
+                which maps each opcode to each appropriate UM functions
+
+----------------------------------- Test cases --------------------------------
+
+First of all, we would write a program that would produce binary UM instructions
+following the guidelines from the lab. Then we would use the program to 
+produce inputs for these unit tests and program tests below. 
+
+--- Unit test --- 
+
+headquaters.c: 
+
+        Normal: 
+                - A binary file/stdin is given
+        Extreme: 
+                - An empty file is given
+        Invalid: 
+                - A non-binary file/stdin is given
+        
+um_memory.h & um_memory.c:
+
+        Normal: 
+                - Put and get data in register index 6
+                - Initialize and free um_memory 
+                - Get and update program counter to valid positive numbers
+        Extreme: 
+                - Put and get data in register index 0 & 7
+                - Update program counter to 0 and the last offset of the segment
+        Invalid: 
+                - Put/get data in register in which the index is out of bound
+                - Freeing empty segments/registers
+                - Store/load unmapped segments
+                - Unmap empty segments
+                - Load/store a value in a location that is out of bound of a
+                  mapped segment
+                - Unmapped segment 0
+
+parsing.h & parsing.c:
+
+        Normal: 
+                - Retrieve rA, rB, rC values correctly
+                - Retrieve rA and values for opcode 13 correctly
+        Extreme: 
+                - Pass a word filled with 0s
+                - Pass a word filled with 1s
+        Invalid: 
+                - Pass an empty word
+
+emulator.h & emulator.c:
+
+        Normal: 
+                - Pass valid copy of umMem
+        Extreme: 
+                - Pass null copy of umMem
+        Invalid:
+                - Program counter points to a non-existing instruction 
+
+instruction.h & instruction.c:
+
+        Normal: 
+                - Correct conditional move when the register's content is not 0
+                - Read a character and print a character
+                - Load value 48, add a 1-digit number to it, and it should print
+                  as the digit
+                - Read one character from the input and use NAND to extract the
+                  least 4 significant 4 bits. Add this number to 48, and prints
+                  the result. It should give the original digit.
+                - For all arithmetic instructions, the print out of any positive
+                  single-digit value should be correct.
+                - Create a loop that map 10 segments with random IDs, then 
+                  unmap every segment using Table_map
+                - Program halt correctly
+        Extreme: 
+                - Perform arithmetic instructions on negative numbers, the 
+                  the output would be unpredictable
+                - If there is no duplication, load program should only do the 
+                  jump operation
+        Invalid:
+                - Opcode that does not call a valid instruction
+                - Instruction divides by zero
+                - Input  a value larger 255 or less than 0
+                - Output a value larger 255 or less than 0
+                - Map a segment with an ID that is greater than 2^32 or less 
+                  than 0
+        
+--- UM test --- 
+
+        - Input the program and call the instructions correctly
+        - Run given um programs in comp40/include with our UM, check if 
+          the program does what should do:
+          ex: cat.um
+        - Input 500,000 instructions and time how long it took the UM to 
+          finish. Also, try to compile with -gcc -1 and -2
+          
+          

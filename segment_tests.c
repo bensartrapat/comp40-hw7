@@ -1,0 +1,209 @@
+/*
+ * Assignment 6 Unit tests
+ * Name: Nga Pham, Sartrapat Saengcharoentrakul
+ * Username: npham02, ssaeng01
+ * Date: 03/28/15
+ * 
+ */
+
+#include <stdlib.h>
+#include <stdio.h>
+
+#include <stdbool.h>
+#include "except.h"
+#include "assert.h"
+#include <inttypes.h>
+#include "um_memory.h"
+
+extern umMem_T program_init_test(int argc, char *argv[]);
+extern void segment_map_test(umMem_T memory);
+extern void segment_unmap_test(umMem_T memory);
+extern void segment_length_test(umMem_T memory);
+extern void segment_isEmpty_test(umMem_T memory);
+extern void segment_PutGet_test(umMem_T memory);
+extern void register_PutGet_test(umMem_T memory);
+extern void progCounter_GetUpdate_test(umMem_T memory);
+
+
+/* We will test program_free by using valgrind rather than a specific function
+ * for it
+ */
+
+int main(int argc, char *argv[])
+{
+        umMem_T memory = program_init_test(argc, argv);
+        
+        segment_map_test(memory); 
+
+}
+
+extern umMem_T program_init_test(int argc, char *argv[]) 
+{
+        FILE *input;
+
+        /*reads in the file*/
+        if (argc == 1) {
+                input = stdin;
+        } else {
+                input = fopen (argv[1], "rb");
+        }
+        
+        if (input == NULL) return 0;
+        
+        return program_init(input);
+}
+
+extern void segment_map_test(umMem_T memory) 
+{        
+        for (int i = 1; i <= 7; i++) {
+                segment_map(memory, i, i * 2);
+        }
+        
+        for (int i = 1; i <= 7; i++) {
+                int reg_val = register_get(memory, i);
+                fprintf(stderr, "regID: %d, segID: %d, segLength: %d\n", i, 
+                        reg_val, segment_length(memory, reg_val));
+        }
+        
+        for (int i = 1; i <= 7; i+=2) {
+                fprintf(stderr, "i: %d\n", i);
+                segment_unmap(memory, i);
+        }
+        for (int i = 1; i <= 7; i+=2) {
+                segment_map(memory, i, i + 10);
+        }
+        
+        for (int i = 1; i <= 7; i++) {
+                int reg_val = register_get(memory, i);
+                fprintf(stderr, "regID: %d, segID: %d, segLength: %d\n", i, 
+                        reg_val, segment_length(memory, reg_val));
+        }
+
+}
+
+extern void segment_unmap_test(umMem_T memory)
+{
+        for (int i = 1; i < 20; i++) {
+                int seg_length = segment_length(memory, i);
+                if (seg_length != i * 2) {
+                        fprintf(stderr, "Length is not right");
+                }
+                segment_unmap(memory, i);
+                if (segment_isEmpty(memory, i) == false) {
+                        fprintf(stderr, "Not correctly unmapped m[%d]\n", i);
+                }
+        }
+        
+        fprintf(stderr, "segment_unmap is fine with valid inputs\n");
+}
+
+extern void segment_length_test(umMem_T memory)
+{
+        for (int i = 0; i < 20; i+=2) {
+                segment_map(memory, i, i * 2);
+                int seg_length = segment_length(memory, i);
+                if (i * 2 != seg_length) {
+                        fprintf(stderr, "Wrong length at %d\n", i);
+                }
+        }
+        
+        fprintf(stderr, "segment_length is fine with valid inputs\n");
+}
+
+extern void segment_isEmpty_test(umMem_T memory)
+{
+        for (int i = 0; i < 20; i+=2) {
+                segment_map(memory, i, i + 2);
+        }
+        
+        /* odd would be empty, even is not empty */
+        for (int i = 0; i < 20; i++) {
+                if ( i % 2 == 0 && segment_isEmpty(memory, i) == true) {
+                        fprintf(stderr, "Even should be not empty\n");
+                }
+                else if ( i % 2 == 1 && segment_isEmpty(memory, i) == false) {
+                        fprintf(stderr, "Odd should be empty\n");
+                }
+        }
+        
+        fprintf(stderr, "segment_isEmpty is fine with valid inputs\n");
+}
+
+extern void segment_PutGet_test(umMem_T memory)
+{
+        uint32_t array[10];
+                       
+        for (int i = 0; i < 10; i++) {
+                array[i] = (uint32_t) (i * 10);
+        }
+        
+        /* Map segment 8, and store array elements in segment 8 */
+        segment_map(memory, 8, 10);
+        for(int i = 0; i < 10; i++) {
+                segment_put(memory, 8, i, array[i]);
+        }
+        for(int i = 0; i < 10; i++) {
+                if (segment_get(memory, 8, i) != array[i]) {
+                        fprintf(stderr, "Offset %d has incorrect value\n", i);
+                }
+        }
+        
+        fprintf(stderr, "segment_PutGet is fine with valid inputs\n");
+}
+
+extern void register_PutGet_test(umMem_T memory)
+{
+        uint32_t array[8];
+        
+        for (int i = 0; i < 8; i++) {
+                array[i] = (uint32_t) (i * 10);
+        }
+        
+        for(int i = 0; i < 8; i++) {
+                register_put(memory, i, array[i]);
+        }
+        for(int i = 0; i < 8; i++) {
+                if (register_get(memory, i) != array[i]) {
+                        fprintf(stderr, "Register %d has incorrect value\n", i);
+                }
+        } 
+        
+        fprintf(stderr, "register_PutGet is fine with valid inputs\n");
+}
+
+extern void progCounter_GetUpdate_test(umMem_T memory)
+{
+        for (int i = 0; i < 50; i++) {
+                progCounter_update(memory, i);
+                if (progCounter_get(memory) != i) {
+                        fprintf(stderr, "Counter %d has incorrect value\n", i);
+                }
+        }
+        
+        fprintf(stderr, "progCounter is fine with valid inputs\n");
+}
+
+/*
+extern void registerGet_only(umMem_T memory)
+{
+        uint32_t array[8];
+
+        for(int i = 0; i < 8; i++) {
+                register_put(memory, i, array[i]);
+        }
+
+        register_get(memory, i);
+        
+}
+
+extern void registerGet_onlyHelper(umMem_T memory)
+{
+        for(int i = 0; i < 8; i++) {
+                if (register_get(memory, i) != array[i]) {
+                        fprintf(stderr, "Register %d has incorrect value\n", i);
+                }
+        } 
+        
+}
+
+*/

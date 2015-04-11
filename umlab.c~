@@ -1,0 +1,308 @@
+/* 
+ * 		Title: umlab.c 
+ * 		Name: Nga Pham, Sartrapat Saengcharoentrakul 
+ * 		Username: npham02, ssaeng01
+ * 		Assigment 6
+ * 
+ * 		Note: This code is based of the code given in the lab.
+ */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <stdbool.h>
+#include "except.h"
+#include "assert.h"
+#include <inttypes.h>
+#include "seq.h"
+#include "bitpack.h"
+#include <string.h>
+
+
+static const int OPCODE_WIDTH = 4;
+static const int REGISTER_WIDTH = 3;
+
+typedef uint32_t Um_instruction;
+typedef int Um_opcode;
+
+static inline Um_instruction three_register(Um_opcode op, int ra, int rb, 
+									int rc)
+{
+	uint32_t word = 0; 
+	word = Bitpack_newu(word, OPCODE_WIDTH, 28, op);
+	word = Bitpack_newu(word, REGISTER_WIDTH, 6, ra);
+	word = Bitpack_newu(word, REGISTER_WIDTH, 3, rb);
+	word = Bitpack_newu(word, REGISTER_WIDTH, 0, rc);
+	return word;
+}
+
+static inline Um_instruction loadval(Um_opcode op, unsigned ra, unsigned val)
+{
+	uint32_t word = 0;
+	word = Bitpack_newu(word, 4, 28, op);        
+	word = Bitpack_newu(word, REGISTER_WIDTH, 25, ra);        
+	word = Bitpack_newu(word, 25, 0, val);
+	return word;
+}
+
+static inline Um_instruction CM(int ra, int rb, int rc)
+{
+	return three_register(0, ra, rb, rc);
+}
+
+static inline Um_instruction SL(int ra, int rb, int rc)
+{
+	return three_register(1, ra, rb, rc);
+}
+
+static inline Um_instruction SS(int ra, int rb, int rc)
+{
+	return three_register(2, ra, rb, rc);
+}
+
+static inline Um_instruction Add(int ra, int rb, int rc)
+{
+	return three_register(3, ra, rb, rc);
+}
+
+static inline Um_instruction Mult(int ra, int rb, int rc)
+{
+	return three_register(4, ra, rb, rc);
+}
+
+static inline Um_instruction Div(int ra, int rb, int rc)
+{
+	return three_register(5, ra, rb, rc);
+}
+
+static inline Um_instruction NAND(int ra, int rb, int rc)
+{
+	return three_register(6, ra, rb, rc);
+}
+
+static inline Um_instruction Halt(void)
+{
+	return three_register(7, 0, 0, 0);
+}
+
+static inline Um_instruction Map(int rb, int rc)
+{
+	return three_register(8, 0, rb, rc);
+}
+
+static inline Um_instruction Unmap(int rc)
+{
+	return three_register(9, 0, 0, rc);
+}
+
+static inline Um_instruction Output(int rc)
+{
+	return three_register(10, 0, 0, rc);
+}
+
+static inline Um_instruction Input(int rc)
+{
+	return three_register(11, 0, 0, rc);
+}
+
+static inline Um_instruction LP(int rb, int rc)
+{
+	return three_register(12, 0, rb, rc);
+}
+
+static inline Um_instruction LV(unsigned ra, unsigned val)
+{
+	return loadval(13, ra, val);
+}
+
+enum regs { r0 = 0, r1, r2, r3, r4, r5, r6, r7 };
+
+extern void Um_write_sequence(FILE *output, Seq_T stream);
+
+static inline void emit(Seq_T stream, Um_instruction inst)
+{
+	assert(sizeof(inst) <= sizeof(uintptr_t));
+	Seq_addhi(stream, (void *)(uintptr_t) inst);
+}
+
+static inline Um_instruction get_inst(Seq_T stream, int i)
+{
+	assert(sizeof(Um_instruction) <= sizeof(uintptr_t));
+	return (Um_instruction) (uintptr_t) (Seq_get(stream, i));
+}
+
+static inline void put_inst(Seq_T stream, int i, Um_instruction inst)
+{
+	assert(sizeof(inst) <= sizeof(uintptr_t));
+	Seq_put(stream, i, (void *)(uintptr_t) inst);
+}
+
+void emit_halt_test(Seq_T stream)
+{
+	emit(stream, Halt());
+	emit(stream, LV(r1, 'B'));
+	emit(stream, Output(r1));
+	emit(stream, LV(r1, 'a'));
+	emit(stream, Output(r1));
+	emit(stream, LV(r1, 'd'));
+	emit(stream, Output(r1));
+	emit(stream, LV(r1, '!'));
+	emit(stream, Output(r1));
+	emit(stream, LV(r1, '\n'));
+	emit(stream, Output(r1));
+}
+
+void emit_LV_Output_test(Seq_T stream)
+{
+	emit(stream, LV(r1, 'G'));
+	emit(stream, Output(r1));
+	emit(stream, LV(r1, 'o'));
+	emit(stream, Output(r1));
+	emit(stream, LV(r1, 'o'));
+	emit(stream, Output(r1));
+	emit(stream, LV(r1, 'd'));
+	emit(stream, Output(r1));
+	emit(stream, LV(r1, '!'));
+	emit(stream, Output(r1));
+}
+
+void emit_input_test(Seq_T stream)
+{
+	emit(stream, Input(r1)); 
+	emit(stream, Output(r1));
+}
+
+void emit_add_test(Seq_T stream)
+{
+	emit(stream, LV(r0, 25));    
+	emit(stream, Add(r0, r0, r0));
+	emit(stream, Output(r0));
+}
+
+void emit_mult_test(Seq_T stream)
+{
+	emit(stream, LV(r0, 8));    
+	emit(stream, Mult(r0, r0, r0));
+	emit(stream, Output(r0));
+}
+
+void emit_div_test(Seq_T stream)
+{
+	emit(stream, LV(r0, 200));
+	emit(stream, LV(r1, 4));        
+	emit(stream, Div(r2, r0, r1));
+	emit(stream, Output(r2));
+}
+
+void emit_nand_test(Seq_T stream)
+{
+	emit(stream, LV(r0, 0));
+	emit(stream, LV(r1, 0));   
+	emit(stream, Output(r0));
+	emit(stream, Output(r1));
+	emit(stream, NAND(r2, r0, r1));
+	emit(stream, NAND(r3, r2, r2));
+	emit(stream, Output(r3));
+}
+
+void emit_conditionalMove_test(Seq_T stream)
+{
+	emit(stream, LV(r0, 0));
+	emit(stream, LV(r1, 51));
+	emit(stream, LV(r2, 2));
+	emit(stream, CM(r0, r1, r2));
+	emit(stream, Output(r0));                
+
+}
+
+void emit_map_SL_SS_test(Seq_T stream)
+{
+	emit(stream, LV(r0, 'B'));
+	emit(stream, LV(r1, 'E'));
+	emit(stream, LV(r2, 'E'));
+
+	emit(stream, LV(r3, 2));
+	emit(stream, LV(r4, 3));
+
+	emit(stream, LV(r5, 0));
+	emit(stream, LV(r6, 1));
+	emit(stream, LV(r7, 2));
+
+	emit(stream, Map(r3, r4));
+
+	emit(stream, SS(r3, r5, r0));
+	emit(stream, SS(r3, r6, r1));
+	emit(stream, SS(r3, r7, r2));
+
+	emit(stream, SL(r4, r3, r5));
+	emit(stream, Output(r4));
+	emit(stream, SL(r4, r3, r6));
+	emit(stream, Output(r4));
+	emit(stream, SL(r4, r3, r7));
+	emit(stream, Output(r4));
+
+	emit(stream, Unmap(r3));
+}
+
+void emit_half_million(Seq_T stream)
+{
+	for (int i = 0; i < 41667; i++) {
+		emit(stream, LV(r0, i));
+		emit(stream, LV(r1, i)); 		       		        
+		emit(stream, Map(r0, r1));      
+		emit(stream, Unmap(r0)); 
+		emit(stream, LV(r2, i));
+		emit(stream, LV(r3, i)); 		       		        
+		emit(stream, Map(r2, r3));      
+		emit(stream, Unmap(r2)); 
+		emit(stream, LV(r4, i));
+		emit(stream, LV(r5, i)); 		       		        
+		emit(stream, Map(r4, r5));      
+		emit(stream, Unmap(r4)); 
+	}
+}
+
+
+static void add_label(Seq_T stream, int location_to_patch, int label_value)
+{
+	Um_instruction inst = get_inst(stream, location_to_patch);
+	unsigned k = Bitpack_getu(inst, 25, 0);
+	inst = Bitpack_newu(inst, 25, 0, label_value + k);
+	put_inst(stream, location_to_patch, inst);
+}
+
+
+static void emit_out_string(Seq_T stream, const char *s, int aux_reg)
+{	
+	for (int i = 0; i < (int) strlen(s); i++) {
+		emit(stream, LV(aux_reg, s[i]));
+		emit(stream, Output(aux_reg));
+	}
+}
+
+void emit_goto_test(Seq_T stream)
+{
+	int patch_L = Seq_length(stream);
+	emit(stream, LV(r7, 0));	     /* will be patched to 'r7 := L' */
+	emit(stream, LP(r0, r7));   /* should goto label L          */
+	emit_out_string(stream, "GOTO failed.\n", r1);
+	emit(stream, Halt());
+	/* define 'L' to be here */
+	add_label(stream, patch_L, Seq_length(stream));	
+	emit_out_string(stream, "GOTO passed.\n", r1);
+	emit(stream, Halt());
+}
+
+void Um_write_sequence(FILE *output, Seq_T asm)
+{
+
+	int length = Seq_length(asm);
+	assert(length > 0);
+	for (int i = 0; i < length; i++) { 
+		uintptr_t word = (uintptr_t)Seq_remlo(asm);
+		/* print codeword byte-by-byte in BIG ENDIAN */
+		for(int lsb = 24; lsb >= 0; lsb -= 8) {
+			putc((int)Bitpack_getu(word, 8, lsb), output);
+		}
+	}
+}
