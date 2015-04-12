@@ -61,8 +61,9 @@ static inline void call_instruction(umMem_T memory, uint32_t word)
         
         /* parse appropriate values according to given opcode */
         if (opcode == 13) {
-                ra = opcode_13_get_rA(word);
-                value = opcode_13_get_value(word);
+                uint32_t mask = ~0;
+                ra = (word & ((mask >> 29) << 25)) >> 25;
+                value = word & (mask >> 7);
         } else {
                 get_registers(word, &rA, &rB, &rC);
 
