@@ -26,21 +26,11 @@ const int BYTE_UINT32 = 4; /* number of bytes in 32 bits */
 const int SHIFT_VAL = 32; 
 const int ZERO = 0;
 const int UI32SIZE = sizeof(uint32_t);
-#define T umMem_T
-
-struct T {
-        int progCounter;
-        int maxID;		/* biggest segment ID that has been mapped */
-        UArray_T segmentList;	/* segmentList is a UArray of UArray */
-        uint32_t* registerList;
-        Stack_T unmapStack;	/* stack stores unmapped segment IDs to reuse
-         	 	 	 * later */
-};
 
 static inline int get_new_ID(umMem_T memory);
 static inline void store_old_ID(umMem_T memory, int segID);
 
-T program_init(FILE *input) 
+umMem_T program_init(FILE *input) 
 {
         assert(input);
         int c, progSize = 0;
@@ -48,7 +38,7 @@ T program_init(FILE *input)
         uint64_t word = 0;
         
         /* initialize umMem_T */
-        T memory = malloc(sizeof(struct T));
+        umMem_T memory = malloc(sizeof(struct umMem_T));
         memory->progCounter = ZERO;
         memory->maxID = ZERO;
         memory->segmentList = UArray_new(HINT, sizeof(UArray_T));
@@ -115,7 +105,7 @@ void segment_map(umMem_T memory, int regID, int length)
         
         /* find an available segment ID to use */
         int newSegID = get_new_ID(memory);
-        register_put(memory, regID, newSegID);
+        memory->registerList[regID] = newSegID;
 
         /* resize if necessary */
         if (newSegID >= UArray_length(memory->segmentList)) {

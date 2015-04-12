@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#include <uarray.h>
+#include <stack.h>
 
 
 #ifndef UMMEM_INCLUDED
@@ -19,6 +21,15 @@
 
 #define T umMem_T
 typedef struct T *T;
+
+struct T {
+        int progCounter;
+        int maxID;              /* biggest segment ID that has been mapped */
+        UArray_T segmentList;   /* segmentList is a UArray of UArray */
+        uint32_t* registerList;
+        Stack_T unmapStack;     /* stack stores unmapped segment IDs to reuse
+                                 * later */
+};
 
 /* initialize program from input file, return umMem_T */
 extern T program_init(FILE *input);
@@ -49,11 +60,6 @@ extern void segment_put(umMem_T memory, int segID, int offset, uint32_t value);
 extern uint32_t register_get(umMem_T memory, int regID);
 
 extern void register_put(umMem_T memory, int regID, uint32_t value);
-
-/* get or update program counter, what instruction you are in segment 0 */
-extern int progCounter_get(umMem_T memory);
-
-extern void progCounter_update(umMem_T memory, int value);
 
 #undef T 
 #endif 
