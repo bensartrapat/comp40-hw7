@@ -142,10 +142,11 @@ bool segment_isEmpty(umMem_T memory, int segID)
 uint32_t segment_get(umMem_T memory, int segID, int offset)
 {
     	//assert(segment_isEmpty(memory, segID) == false);
-        assert(offset >= 0 && offset < segment_length(memory, segID));
-        
         uint32_t* segment = *(uint32_t **)UArray_at(memory->segmentList, segID);
         assert(segment != NULL);
+        assert(offset >= 0 && offset < (int)segment[0]);
+        
+        
         return segment[offset+1];
 }
 
@@ -153,10 +154,11 @@ void segment_put(umMem_T memory, int segID, int offset, uint32_t value)
 {
         assert(memory);
         //assert(segment_isEmpty(memory, segID) == false);
-        assert(offset >= 0 && offset < segment_length(memory, segID));
         
         uint32_t* segment = *(uint32_t **)UArray_at(memory->segmentList, segID);
         assert(segment != NULL);
+        assert(offset >= 0 && offset < (int)segment[0]);
+        
         segment[offset+1] = value;
 
 }

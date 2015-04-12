@@ -22,7 +22,7 @@ void conditional_move(umMem_T memory, int A, int B, int C)
 {
         if (memory->registerList[C] != 0) {
                 memory->registerList[A] = memory->registerList[B];
-        }        
+        }               
 }
 
 void segmented_load(umMem_T memory, int A, int B, int C)
@@ -108,9 +108,35 @@ uint32_t load_program(umMem_T memory, int B, int C)
         uint32_t rB_value = memory->registerList[B];
 
         /* $[rB] is duplicated */
+        /*if (rB_value != 0) {
+               uint32_t* segment0 = *(uint32_t **)UArray_at(memory->segmentList,
+0);
+        assert(segment0 != NULL);
+//         free(segment0);
+//                 int length = segment_length(memory, rB_value);
+                 uint32_t* segment =
+ *(uint32_t**)UArray_at(memory->segmentList,
+ rB_value);
+                 int length = segment[0];
+                
+//                 segment_map(memory, 0, length);
+
+                uint32_t* data = calloc(length, sizeof(uint32_t));
+                 copy from segment with ID $r[B] to segment 0 
+                for (int i = 1; i < length+1; i++) {
+                         uint32_t value = segment[i];
+//                         uint32_t value = segment_get(memory, rB_value, i);
+                         data[i-1] = value;
+                }
+                *(uint32_t **)UArray_at(memory->segmentList, 0) = data;
+        }*/
+        
         if (rB_value != 0) {
                 segment_unmap(memory, 0);
-                int length = segment_length(memory, rB_value);
+                                 uint32_t* segment =
+ *(uint32_t**)UArray_at(memory->segmentList,
+ rB_value);
+                 int length = segment[0];
                 segment_map(memory, 0, length);
                 
                 /* copy from segment with ID $r[B] to segment 0 */
@@ -119,6 +145,10 @@ uint32_t load_program(umMem_T memory, int B, int C)
                         segment_put(memory, 0, i, value);
                 }
         }
+        
+        
+        
+        
         return memory->registerList[C];
 }
 
