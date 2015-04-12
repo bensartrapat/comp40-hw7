@@ -16,14 +16,17 @@
 
 #include "emulator.h"
 #include "assert.h"
-#include "parsing.h"
 #include "um_memory.h"
 #include "instructions.h"
 
-const int RA = 29;
+const int RA = 23;
 const int RB = 26;
-const int RC = 23;
-const int WIDTH = 3;
+const int RC = 29;
+const int REG_WIDTH = 3;
+const int OP_WIDTH = 4;
+const int OP_N_REG_WIDTH = 7;
+const int REG_SHIFT_RIGHT = 29;
+const int INST_WIDTH = 32;
 
 static inline void call_instruction(umMem_T memory, uint32_t word);
 
@@ -46,17 +49,17 @@ static inline void call_instruction(umMem_T memory, uint32_t word)
 {
         int rA = 0, rB = 0, rC = 0;		/* three_instruction value */
         unsigned ra = 0, value = 0;		/* instruction_13 value */
-        int opcode = word >> 28;
+        int opcode = word >> (INST_WIDTH - OP_WIDTH);
         assert(opcode >= 0 && opcode <= 13);
         
         /* parse appropriate values according to given opcode */
         if (opcode == 13) {
-                ra = (word << 4) >> 29;
-                value = (word << 7) >> 7;
+                ra = (word << OP_WIDTH) >> REG_SHIFT_RIGHT;
+                value = (word << OP_N_REG_WIDTH) >> OP_N_REG_WIDTH;
         } else {
-                rA = (word << 23) >> 29;
-                rB = (word << 26) >> 29;
-                rC = (word << 29) >> 29;
+                rA = (word << RA) >> REG_SHIFT_RIGHT;
+                rB = (word << RB) >> REG_SHIFT_RIGHT;
+                rC = (word << RC) >> REG_SHIFT_RIGHT;
         }
         
         switch(opcode) {

@@ -12,7 +12,6 @@
 #include <stdio.h>
 
 #include "assert.h"
-#include "parsing.h"
 #include "um_memory.h"
 #include "instructions.h"
 #include <math.h>
@@ -91,7 +90,7 @@ void output(umMem_T memory, int C)
 void input(umMem_T memory, int C)
 {
         int input = getc(stdin);
-        assert(input >= 0 && input <= 255);
+        //assert(input >= 0 && input <= 255);
         if (input != EOF) {
                 register_put(memory, C, (uint32_t)input);
         } else { 

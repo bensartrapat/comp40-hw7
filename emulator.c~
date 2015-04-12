@@ -16,17 +16,25 @@
 
 #include "emulator.h"
 #include "assert.h"
-#include "parsing.h"
 #include "um_memory.h"
 #include "instructions.h"
+
+const int RA = 23;
+const int RB = 26;
+const int RC = 29;
+const int REG_WIDTH = 3;
+const int OP_WIDTH = 4;
+const int OP_N_REG_WIDTH = 7;
+const int REG_SHIFT_RIGHT = 29;
+const int INST_WIDTH = 32;
 
 static inline void call_instruction(umMem_T memory, uint32_t word);
 
 void execute(umMem_T memory)
 {
-		/* loop through the whole segment zero */
+	/* loop through the whole segment zero */
         while (progCounter_get(memory) < segment_length(memory, 0)) {
-        		/* execute each instruction, update progCounter */
+        	/* execute each instruction, update progCounter */
                 uint32_t word = segment_get(memory, 0, progCounter_get(memory));
                 progCounter_update(memory, progCounter_get(memory) + 1);
                 call_instruction(memory, word);
@@ -39,24 +47,24 @@ void execute(umMem_T memory)
  */
 static inline void call_instruction(umMem_T memory, uint32_t word)
 {
-        int rA, rB, rC;			/* three_instruction value */
-        unsigned ra, value;		/* instruction_13 value */
-        int opcode = get_opcode(word);
+        int rA = 0, rB = 0, rC = 0;		/* three_instruction value */
+        unsigned ra = 0, value = 0;		/* instruction_13 value */
+        int opcode = word >> (INST_WIDTH - OP_WIDTH);
         assert(opcode >= 0 && opcode <= 13);
         
         /* parse appropriate values according to given opcode */
         if (opcode == 13) {
-				ra = opcode_13_get_rA(word);
-				value = opcode_13_get_value(word);
+                ra = (word << OP_WIDTH) >> REG_SHIFT_RIGHT;
+                value = (word << OP_N_REG_WIDTH) >> OP_N_REG_WIDTH;
         } else {
-				rA = get_rA(word);	
-				rB = get_rB(word);
-				rC = get_rC(word);
+                rA = (word << RA) >> REG_SHIFT_RIGHT;
+                rB = (word << RB) >> REG_SHIFT_RIGHT;
+                rC = (word << RC) >> REG_SHIFT_RIGHT;
         }
         
         switch(opcode) {
                 case 0: conditional_move(memory, rA, rB, rC);
-                		return;
+                	return;
                 case 1: segmented_load(memory, rA, rB, rC);
                         return;
                 case 2: segmented_store(memory, rA, rB, rC);

@@ -1,10 +1,10 @@
 /* 
- * 		Title: umlab.c 
- * 		Name: Nga Pham, Sartrapat Saengcharoentrakul 
- * 		Username: npham02, ssaeng01
- * 		Assigment 6
+ * 	Title: umlab.c 
+ * 	Name: Nga Pham, Sartrapat Saengcharoentrakul 
+ * 	Username: npham02, ssaeng01
+ * 	Assigment 6
  * 
- * 		Note: This code is based of the code given in the lab.
+ * 	Note: This code is based of the code given in the lab.
  */
 
 #include <stdlib.h>
@@ -246,7 +246,7 @@ void emit_map_SL_SS_test(Seq_T stream)
 
 void emit_half_million(Seq_T stream)
 {
-	for (int i = 0; i < 41667; i++) {
+	for (int i = 0; i < 8333334; i++) {
 		emit(stream, LV(r0, i));
 		emit(stream, LV(r1, i)); 		       		        
 		emit(stream, Map(r0, r1));      

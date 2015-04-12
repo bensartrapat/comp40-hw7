@@ -246,7 +246,7 @@ void emit_map_SL_SS_test(Seq_T stream)
 
 void emit_half_million(Seq_T stream)
 {
-	for (int i = 0; i < 41667; i++) {
+	for (int i = 0; i < 8333334; i++) {
 		emit(stream, LV(r0, i));
 		emit(stream, LV(r1, i)); 		       		        
 		emit(stream, Map(r0, r1));      
@@ -261,7 +261,6 @@ void emit_half_million(Seq_T stream)
 		emit(stream, Unmap(r4)); 
 	}
 }
-
 
 static void add_label(Seq_T stream, int location_to_patch, int label_value)
 {

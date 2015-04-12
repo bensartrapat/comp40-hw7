@@ -45,7 +45,7 @@ T program_init(FILE *input)
         assert(input);
         int c, progSize;
         int shift = SHIFT_VAL;
-        uint64_t word;
+        uint64_t word = 0;
         
         /* initialize umMem_T */
         T memory = malloc(sizeof(struct T));
@@ -77,7 +77,7 @@ T program_init(FILE *input)
                         					(unsigned)c);
                 }
                 if (shift == 0) {
-                        segment_put(memory, ZERO, progCounter_get(memory), 
+                        segment_put(memory, ZERO, memory->progCounter, 
                                                   (uint32_t)word);
                         shift = SHIFT_VAL;
                         memory->progCounter++;

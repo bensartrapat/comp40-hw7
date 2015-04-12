@@ -20,7 +20,7 @@ LIBS="$CIILIBS -lnetpbm -lm -lbitpack"
 LFLAGS="-L/comp/40/lib64"
 
 # these flags max out warnings and debug info
-FLAGS="-g -O0 -Wall -Wextra -Werror -Wfatal-errors -std=c99 -pedantic"
+FLAGS="-g -O1 -Wall -Wextra -Werror -Wfatal-errors -std=c99 -pedantic"
 
 rm -f *.o  # make sure no object files are left hanging around
 
@@ -51,8 +51,6 @@ case $link in
                     um_memory.o\
                     $LIBS $CIILIBS  $LFLAGS 
                   linked=yes ;;
-esac
-
 esac
 
 case $link in

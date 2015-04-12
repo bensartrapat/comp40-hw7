@@ -9,8 +9,10 @@
 * 
 * 	Fail cases: - program counter points outside of bound of segment zero
 * 		    - each word does not code for a valid instruction 
- */
+*/
 
 #include "um_memory.h"
 
 void execute(umMem_T memory);
+
+void get_registers(uint32_t inst, int* rA, int* rB, int* rC);
