@@ -20,6 +20,21 @@
 #include "um_memory.h"
 #include "instructions.h"
 
+const int RA = 29;
+const int RB = 26;
+const int RC = 23;
+const int WIDTH = 3;
+
+void get_registers(uint32_t inst, int* rA, int* rB, int* rC)
+{
+        uint32_t mask = ~0;
+        (*rC) = inst & (mask >> 29);
+        (*rB) = (inst & ((mask >> 29) << 3)) >> 3;
+        (*rA) = (inst & ((mask >> 29) << 6)) >> 6;
+
+}
+
+
 static inline void call_instruction(umMem_T memory, uint32_t word);
 
 void execute(umMem_T memory)
@@ -39,8 +54,8 @@ void execute(umMem_T memory)
  */
 static inline void call_instruction(umMem_T memory, uint32_t word)
 {
-        int rA, rB, rC;			/* three_instruction value */
-        unsigned ra, value;		/* instruction_13 value */
+        int rA = 0, rB = 0, rC = 0;		/* three_instruction value */
+        unsigned ra = 0, value = 0;		/* instruction_13 value */
         int opcode = get_opcode(word);
         assert(opcode >= 0 && opcode <= 13);
         
@@ -49,9 +64,8 @@ static inline void call_instruction(umMem_T memory, uint32_t word)
                 ra = opcode_13_get_rA(word);
                 value = opcode_13_get_value(word);
         } else {
-                rA = get_rA(word);	
-                rB = get_rB(word);
-                rC = get_rC(word);
+                get_registers(word, &rA, &rB, &rC);
+
         }
         
         switch(opcode) {
