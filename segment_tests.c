@@ -171,18 +171,6 @@ extern void register_PutGet_test(umMem_T memory)
         fprintf(stderr, "register_PutGet is fine with valid inputs\n");
 }
 
-extern void progCounter_GetUpdate_test(umMem_T memory)
-{
-        for (int i = 0; i < 50; i++) {
-                progCounter_update(memory, i);
-                if (progCounter_get(memory) != i) {
-                        fprintf(stderr, "Counter %d has incorrect value\n", i);
-                }
-        }
-        
-        fprintf(stderr, "progCounter is fine with valid inputs\n");
-}
-
 /*
 extern void registerGet_only(umMem_T memory)
 {

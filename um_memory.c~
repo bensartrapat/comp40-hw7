@@ -43,7 +43,7 @@ static inline void store_old_ID(umMem_T memory, int segID);
 T program_init(FILE *input) 
 {
         assert(input);
-        int c, progSize;
+        int c, progSize = 0;
         int shift = SHIFT_VAL;
         uint64_t word = 0;
         
@@ -66,8 +66,9 @@ T program_init(FILE *input)
         fseek(input, 0L, SEEK_SET);
         
         /* create segment zero */
-        UArray_T segmentZero = UArray_new(progSize / UI32SIZE, UI32SIZE);
-        *(UArray_T *)UArray_at(memory->segmentList, ZERO) = segmentZero;
+        uint32_t* data = calloc(progSize / UI32SIZE + 1, UI32SIZE);
+        data[0] = progSize;
+        *(uint32_t **)UArray_at(memory->segmentList, ZERO) = data;
         
         /* load instructions to segment zero */
         while ((c = getc(input)) != EOF) {
@@ -92,13 +93,13 @@ T program_init(FILE *input)
 void program_free(umMem_T *memory) 
 {
         assert(memory);
-        UArray_T curr = NULL;
+        uint32_t* curr = NULL;
 		
 		/* loop to free every segment in segmentList */
         for (int i = 0; i <= (*memory)->maxID; i++) {
-                curr = *(UArray_T *)UArray_at((*memory)->segmentList, i);
+                curr = *(uint32_t **)UArray_at((*memory)->segmentList, i);
                 if (curr != NULL) {
-                        UArray_free(&curr);
+                        free(curr);
                 }
         }
         
@@ -121,8 +122,9 @@ void segment_map(umMem_T memory, int regID, int length)
                 UArray_resize(memory->segmentList, newSegID * 2);
         } 
         
-        UArray_T segment = UArray_new(length, UI32SIZE);        
-        *(UArray_T *)UArray_at(memory->segmentList, newSegID) = segment;
+        uint32_t* data = calloc(length+1, UI32SIZE);
+        data[0] = length;
+        *(uint32_t **)UArray_at(memory->segmentList, newSegID) = data;
 }
 
 void segment_unmap(umMem_T memory, int segID) 
@@ -132,20 +134,18 @@ void segment_unmap(umMem_T memory, int segID)
         
         store_old_ID(memory, segID);
         
-        UArray_T segment = *(UArray_T *)UArray_at(memory->segmentList, segID);
-        UArray_free(&segment);
-        *(UArray_T *)UArray_at(memory->segmentList, segID) = NULL;
+        uint32_t* segment = *(uint32_t **)UArray_at(memory->segmentList, segID);
+        free(segment);
+        *(uint32_t **)UArray_at(memory->segmentList, segID) = NULL;
 }
 
 bool segment_isEmpty(umMem_T memory, int segID)
 {
         assert(memory);
         
-        if (*(UArray_T *)UArray_at(memory->segmentList, segID) == NULL) {
+        if (*(uint32_t **)UArray_at(memory->segmentList, segID) == NULL)
                 return true;
-        } else { 
-                return false;
-        }
+        return false;
 }
 
 uint32_t segment_get(umMem_T memory, int segID, int offset)
@@ -153,8 +153,8 @@ uint32_t segment_get(umMem_T memory, int segID, int offset)
     	assert(segment_isEmpty(memory, segID) == false);
         assert(offset >= 0 && offset < segment_length(memory, segID));
         
-        UArray_T segment = *(UArray_T *)UArray_at(memory->segmentList, segID);
-        return *(uint32_t *)UArray_at(segment, offset);
+        uint32_t* segment = *(uint32_t **)UArray_at(memory->segmentList, segID);
+        return segment[offset+1];
 }
 
 void segment_put(umMem_T memory, int segID, int offset, uint32_t value)
@@ -162,17 +162,19 @@ void segment_put(umMem_T memory, int segID, int offset, uint32_t value)
         assert(memory);
         assert(segment_isEmpty(memory, segID) == false);
         assert(offset >= 0 && offset < segment_length(memory, segID));
-		        
-        UArray_T segment = *(UArray_T *)UArray_at(memory->segmentList, segID);
-        *(uint32_t *)UArray_at(segment, offset) = value;
+        
+        uint32_t* segment = *(uint32_t **)UArray_at(memory->segmentList, segID);
+        segment[offset+1] = value;
+
 }
 
 int segment_length(umMem_T memory, int segID)
 {
         assert(memory);
-        UArray_T segment = *(UArray_T *)UArray_at(memory->segmentList, segID);
+        uint32_t* segment = *(uint32_t**)UArray_at(memory->segmentList,
+segID);
         if (segment != NULL) {
-                        return UArray_length(segment);
+                return segment[0];
         } else { 
                 return 0;
         }
@@ -191,20 +193,6 @@ void register_put(umMem_T memory, int regID, uint32_t value)
         assert(memory);
         *(uint32_t *)UArray_at(memory->registerList, regID) = value;
 }
-
-int progCounter_get(umMem_T memory) 
-{
-	assert(memory);
-        return memory->progCounter;
-}
-
-void progCounter_update(umMem_T memory, int value)
-{
-        assert(value >= ZERO);
-        assert(memory);
-        memory->progCounter = value;
-}
-
 
 /* return an ID that can be used to map a segment
  * if unmapStack has available IDs to reuse, return an ID from that

@@ -1,11 +1,11 @@
 /* 
- * 		Title: um_memory.h 
- * 		Name: Nga Pham, Sartrapat Saengcharoentrakul 
- * 		Username: npham02, ssaeng01
- * 		Assigment 6
+ * 	Title: um_memory.h 
+ * 	Name: Nga Pham, Sartrapat Saengcharoentrakul 
+ * 	Username: npham02, ssaeng01
+ * 	Assigment 6
  * 
- * 		Purpose: representation for universal machine memory that includes
- * 				 registers, segments, and program counter.
+ * 	Purpose: representation for universal machine memory that includes
+ * 		 registers, segments, and program counter.
  * 
  */
 

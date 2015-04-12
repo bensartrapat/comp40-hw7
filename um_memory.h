@@ -50,11 +50,6 @@ extern uint32_t register_get(umMem_T memory, int regID);
 
 extern void register_put(umMem_T memory, int regID, uint32_t value);
 
-/* get or update program counter, what instruction you are in segment 0 */
-extern int progCounter_get(umMem_T memory);
-
-extern void progCounter_update(umMem_T memory, int value);
-
 #undef T 
 #endif 
 
