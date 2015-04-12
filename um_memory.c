@@ -32,7 +32,7 @@ struct T {
         int progCounter;
         int maxID;		/* biggest segment ID that has been mapped */
         UArray_T segmentList;	/* segmentList is a UArray of UArray */
-        UArray_T registerList;
+        uint32_t* registerList;
         Stack_T unmapStack;	/* stack stores unmapped segment IDs to reuse
          	 	 	 * later */
 };
@@ -52,12 +52,12 @@ T program_init(FILE *input)
         memory->progCounter = ZERO;
         memory->maxID = ZERO;
         memory->segmentList = UArray_new(HINT, sizeof(UArray_T));
-        memory->registerList = UArray_new(NUM_REGISTER, UI32SIZE);
+        memory->registerList = calloc(NUM_REGISTER, sizeof(uint32_t));
         memory->unmapStack = Stack_new();
         
         /* initialize all registers to ZERO */
         for (int i = 0; i < NUM_REGISTER; i++) {
-                register_put(memory, i, (uint32_t)ZERO);
+                memory->registerList[i] = ZERO;
         }
         
         /* find size of the input in bytes */
@@ -104,7 +104,7 @@ void program_free(umMem_T *memory)
         }
         
         UArray_free(&((*memory)->segmentList));
-        UArray_free(&((*memory)->registerList));
+        free((*memory)->registerList);
         Stack_free(&((*memory)->unmapStack));
         free(*memory);
 }
@@ -183,15 +183,16 @@ segID);
 uint32_t register_get(umMem_T memory, int regID) 
 {
 	assert(memory);
-        uint32_t val = *(uint32_t *)UArray_at(memory->registerList, regID);
-        return val;
+//         uint32_t val = *(uint32_t *)UArray_at(memory->registerList, regID);
+        return memory->registerList[regID];
 }
 
 
 void register_put(umMem_T memory, int regID, uint32_t value)
 {
         assert(memory);
-        *(uint32_t *)UArray_at(memory->registerList, regID) = value;
+//         *(uint32_t *)UArray_at(memory->registerList, regID) = value;
+        memory->registerList[regID] = value;
 }
 
 /* return an ID that can be used to map a segment
