@@ -25,16 +25,6 @@ const int RB = 26;
 const int RC = 23;
 const int WIDTH = 3;
 
-void get_registers(uint32_t inst, int* rA, int* rB, int* rC)
-{
-        uint32_t mask = ~0;
-        (*rC) = inst & (mask >> 29);
-        (*rB) = (inst & ((mask >> 29) << 3)) >> 3;
-        (*rA) = (inst & ((mask >> 29) << 6)) >> 6;
-
-}
-
-
 static inline void call_instruction(umMem_T memory, uint32_t word);
 
 void execute(umMem_T memory)
@@ -56,17 +46,17 @@ static inline void call_instruction(umMem_T memory, uint32_t word)
 {
         int rA = 0, rB = 0, rC = 0;		/* three_instruction value */
         unsigned ra = 0, value = 0;		/* instruction_13 value */
-        int opcode = get_opcode(word);
+        int opcode = word >> 28;
         assert(opcode >= 0 && opcode <= 13);
         
         /* parse appropriate values according to given opcode */
         if (opcode == 13) {
-                uint32_t mask = ~0;
-                ra = (word & ((mask >> 29) << 25)) >> 25;
-                value = word & (mask >> 7);
+                ra = (word << 4) >> 29;
+                value = (word << 7) >> 7;
         } else {
-                get_registers(word, &rA, &rB, &rC);
-
+                rA = (word << 23) >> 29;
+                rB = (word << 26) >> 29;
+                rC = (word << 29) >> 29;
         }
         
         switch(opcode) {

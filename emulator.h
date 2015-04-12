@@ -13,9 +13,4 @@
 
 #include "um_memory.h"
 
-
-
-
 void execute(umMem_T memory);
-
-void get_registers(uint32_t inst, int* rA, int* rB, int* rC);
