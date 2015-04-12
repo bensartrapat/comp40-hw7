@@ -28,16 +28,17 @@ const int OP_N_REG_WIDTH = 7;
 const int REG_SHIFT_RIGHT = 29;
 const int INST_WIDTH = 32;
 
-static inline void call_instruction(umMem_T memory, uint32_t word);
+static inline void call_instruction(umMem_T memory, uint32_t word,
+                                    uint32_t* progCounter);
 
 void execute(umMem_T memory)
 {
 	/* loop through the whole segment zero */
-        while (progCounter_get(memory) < segment_length(memory, 0)) {
+        uint32_t progCounter = 0;
+        while ((int)progCounter < segment_length(memory, 0)) {
         	/* execute each instruction, update progCounter */
-                uint32_t word = segment_get(memory, 0, progCounter_get(memory));
-                progCounter_update(memory, progCounter_get(memory) + 1);
-                call_instruction(memory, word);
+                uint32_t word = segment_get(memory, 0, progCounter);
+                call_instruction(memory, word, &progCounter);
         }
 }
 
@@ -45,7 +46,8 @@ void execute(umMem_T memory)
 /* Given an uint32_t word, call appropriate instruction function
  * to execute it. Fail if word doesn't code for a valid instruction 
  */
-static inline void call_instruction(umMem_T memory, uint32_t word)
+static inline void call_instruction(umMem_T memory, uint32_t word, 
+                                    uint32_t* progCounter)
 {
         int rA = 0, rB = 0, rC = 0;		/* three_instruction value */
         unsigned ra = 0, value = 0;		/* instruction_13 value */
@@ -61,6 +63,9 @@ static inline void call_instruction(umMem_T memory, uint32_t word)
                 rB = (word << RB) >> REG_SHIFT_RIGHT;
                 rC = (word << RC) >> REG_SHIFT_RIGHT;
         }
+        
+        if (opcode != 12) 
+                (*progCounter) = (*progCounter) + 1;
         
         switch(opcode) {
                 case 0: conditional_move(memory, rA, rB, rC);
@@ -87,7 +92,7 @@ static inline void call_instruction(umMem_T memory, uint32_t word)
                         return;
                 case 11: input(memory, rC);
                         return;
-                case 12: load_program(memory, rB, rC);
+                case 12: (*progCounter) = load_program(memory, rB, rC);
                         return;
                 case 13: load_value(memory, ra, value);
                         return;

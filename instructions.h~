@@ -1,19 +1,19 @@
 /* 
- * 		Title: instruction.h 
- * 		Name: Nga Pham, Sartrapat Saengcharoentrakul 
- * 		Username: npham02, ssaeng01
- * 		Assigment 6
+ * 	Title: instruction.h 
+ * 	Name: Nga Pham, Sartrapat Saengcharoentrakul 
+ * 	Username: npham02, ssaeng01
+ * 	Assigment 6
  * 
- * 		Purpose: representation of each UM instruction
+ * 	Purpose: representation of each UM instruction
  * 
- * 		Fail cases: - unmap segment zero or a segment that is not mapped
- * 					- division by zero
- * 					- load a program from a segment that is not mapped
- * 					- output/input a value that's smaller than 0 or bigger
- *					  than 255
- *					- segmented_load/store refers to an unmapped segment
- *					- segmented_load/store refers to a location outside the 
- *					  bound of a mapped segment
+ * 	Fail cases: - unmap segment zero or a segment that is not mapped
+ * 		    - division by zero
+ * 		    - load a program from a segment that is not mapped
+ * 		    - output/input a value that's smaller than 0 or bigger than
+                      255
+ *		    - segmented_load/store refers to an unmapped segment
+ *		    - segmented_load/store refers to a location outside the 
+ *		      bound of a mapped segment
  */
 
 #include <inttypes.h>
@@ -61,7 +61,7 @@ extern void input(umMem_T memory, int C);
 
 /* Loads a new program to segment 0 and set the program counter to the
    value at segment 0, offset value at register C */
-extern void load_program(umMem_T memory, int B, int C);
+extern uint32_t load_program(umMem_T memory, int B, int C);
 
 /* Stores the value (bits after 3 bits away from the opcode) at r[A] */
 extern void load_value(umMem_T memory, unsigned A, unsigned value); 

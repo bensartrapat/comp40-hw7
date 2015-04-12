@@ -61,7 +61,7 @@ extern void input(umMem_T memory, int C);
 
 /* Loads a new program to segment 0 and set the program counter to the
    value at segment 0, offset value at register C */
-extern void load_program(umMem_T memory, int B, int C);
+extern uint32_t load_program(umMem_T memory, int B, int C);
 
 /* Stores the value (bits after 3 bits away from the opcode) at r[A] */
 extern void load_value(umMem_T memory, unsigned A, unsigned value); 

@@ -12,7 +12,6 @@
 #include <stdio.h>
 
 #include "assert.h"
-#include "parsing.h"
 #include "um_memory.h"
 #include "instructions.h"
 #include <math.h>
@@ -99,7 +98,7 @@ void input(umMem_T memory, int C)
         }
 }
 
-void load_program(umMem_T memory, int B, int C)
+uint32_t load_program(umMem_T memory, int B, int C)
 {
         uint32_t rB_value = register_get(memory, B);
 
@@ -115,7 +114,7 @@ void load_program(umMem_T memory, int B, int C)
                         segment_put(memory, 0, i, value);
                 }
         }
-        progCounter_update(memory, register_get(memory, C));
+        return register_get(memory, C);
 }
 
 void load_value(umMem_T memory, unsigned A, unsigned value)
