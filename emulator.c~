@@ -28,8 +28,7 @@ const int OP_N_REG_WIDTH = 7;
 const int REG_SHIFT_RIGHT = 29;
 const int INST_WIDTH = 32;
 
-static inline void call_instruction(umMem_T memory,
-                                    uint32_t* progCounter);
+static inline void call_instruction(umMem_T memory, uint32_t* progCounter);
 
 void execute(umMem_T memory)
 {
@@ -38,8 +37,6 @@ void execute(umMem_T memory)
         //uint32_t* segment = *(uint32_t**)UArray_at(memory->segmentList, 0);
         
         while (1) {
-        	/* execute each instruction, update progCounter */
-               //uint32_t word = segment_get(memory, 0, progCounter);
                 call_instruction(memory, &progCounter);
         }
 }
@@ -48,8 +45,7 @@ void execute(umMem_T memory)
 /* Given an uint32_t word, call appropriate instruction function
  * to execute it. Fail if word doesn't code for a valid instruction 
  */
-static inline void call_instruction(umMem_T memory,
-                                    uint32_t* progCounter)
+static inline void call_instruction(umMem_T memory, uint32_t* progCounter)
 {
         uint32_t word = segment_get(memory, 0, *progCounter);
         

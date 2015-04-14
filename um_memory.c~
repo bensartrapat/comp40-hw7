@@ -39,7 +39,6 @@ umMem_T program_init(FILE *input)
         
         /* initialize umMem_T */
         umMem_T memory = malloc(sizeof(struct umMem_T));
-        memory->progCounter = ZERO;
         memory->maxID = ZERO;
         memory->segmentList = UArray_new(HINT, sizeof(UArray_T));
         memory->registerList = calloc(NUM_REGISTER, sizeof(uint32_t));
@@ -61,6 +60,7 @@ umMem_T program_init(FILE *input)
         *(uint32_t **)UArray_at(memory->segmentList, ZERO) = data;
         
         /* load instructions to segment zero */
+        uint32_t counter = ZERO;
         while ((c = getc(input)) != EOF) {
                 if (shift > 0) {
                         shift = shift - BYTESIZE;
@@ -68,15 +68,12 @@ umMem_T program_init(FILE *input)
                         					(unsigned)c);
                 }
                 if (shift == 0) {
-                        segment_put(memory, ZERO, memory->progCounter, 
+                        segment_put(memory, ZERO, counter, 
                                                   (uint32_t)word);
                         shift = SHIFT_VAL;
-                        memory->progCounter++;
+                        counter++;
                 }
-        }                           
-
-        memory->progCounter = ZERO;
-        
+        }                        
         return memory;
 }
 
@@ -145,16 +142,12 @@ uint32_t segment_get(umMem_T memory, int segID, int offset)
         uint32_t* segment = *(uint32_t **)UArray_at(memory->segmentList, segID);
         assert(segment != NULL);
         assert(offset >= 0 && offset < (int)segment[0]);
-        
-        
         return segment[offset+1];
 }
 
 void segment_put(umMem_T memory, int segID, int offset, uint32_t value)
 {
         assert(memory);
-        //assert(segment_isEmpty(memory, segID) == false);
-        
         uint32_t* segment = *(uint32_t **)UArray_at(memory->segmentList, segID);
         assert(segment != NULL);
         assert(offset >= 0 && offset < (int)segment[0]);
@@ -178,7 +171,6 @@ segID);
 uint32_t register_get(umMem_T memory, int regID) 
 {
 	assert(memory);
-//         uint32_t val = *(uint32_t *)UArray_at(memory->registerList, regID);
         return memory->registerList[regID];
 }
 
@@ -186,7 +178,6 @@ uint32_t register_get(umMem_T memory, int regID)
 void register_put(umMem_T memory, int regID, uint32_t value)
 {
         assert(memory);
-//         *(uint32_t *)UArray_at(memory->registerList, regID) = value;
         memory->registerList[regID] = value;
 }
 

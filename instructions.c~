@@ -27,45 +27,40 @@ void conditional_move(umMem_T memory, int A, int B, int C)
 
 void segmented_load(umMem_T memory, int A, int B, int C)
 {
-        uint32_t result = segment_get(memory, memory->registerList[B], 
-                                              memory->registerList[C]);
-        memory->registerList[A] = result;
+        uint32_t* segment = *(uint32_t**)UArray_at(memory->segmentList,
+                                        memory->registerList[B]);
+        memory->registerList[A] = segment[memory->registerList[C]+1];
 }
 
 void segmented_store(umMem_T memory, int A, int B, int C)
 {
-        segment_put(memory,
-memory->registerList[A],memory->registerList[B],                          
-         memory->registerList[C]);
+        segment_put(memory, memory->registerList[A],memory->registerList[B],   
+                    memory->registerList[C]);
 }
 
 void addition(umMem_T memory, int A, int B, int C)
 {     
-        uint32_t result = (memory->registerList[B] +
+        memory->registerList[A] = (memory->registerList[B] +
 memory->registerList[C]);
-        memory->registerList[A] = result;
 }
 
 void multiplication(umMem_T memory, int A, int B, int C)
 {
-        uint32_t result = (memory->registerList[B] *
-memory->registerList[C]);
-        memory->registerList[A] = result;               
+        memory->registerList[A] = (memory->registerList[B] *
+memory->registerList[C]);       
 }
 
 void division(umMem_T memory, int A, int B, int C)
 {
         assert(memory->registerList[C] != 0);
-        uint32_t result = (memory->registerList[B] /
+        memory->registerList[A] = (memory->registerList[B] /
 memory->registerList[C]);
-        memory->registerList[A] = result;
 }
 
 void bitwise_NAND(umMem_T memory, int A, int B, int C)
 {
-        uint32_t result = ~(memory->registerList[B] &
+        memory->registerList[A] = ~(memory->registerList[B] &
 memory->registerList[C]);
-        memory->registerList[A] = result;
 }
 
 void halt(umMem_T memory)
@@ -107,48 +102,20 @@ uint32_t load_program(umMem_T memory, int B, int C)
 {
         uint32_t rB_value = memory->registerList[B];
 
-        /* $[rB] is duplicated */
-        /*if (rB_value != 0) {
-               uint32_t* segment0 = *(uint32_t **)UArray_at(memory->segmentList,
-0);
-        assert(segment0 != NULL);
-//         free(segment0);
-//                 int length = segment_length(memory, rB_value);
-                 uint32_t* segment =
- *(uint32_t**)UArray_at(memory->segmentList,
- rB_value);
-                 int length = segment[0];
-                
-//                 segment_map(memory, 0, length);
-
-                uint32_t* data = calloc(length, sizeof(uint32_t));
-                 copy from segment with ID $r[B] to segment 0 
-                for (int i = 1; i < length+1; i++) {
-                         uint32_t value = segment[i];
-//                         uint32_t value = segment_get(memory, rB_value, i);
-                         data[i-1] = value;
-                }
-                *(uint32_t **)UArray_at(memory->segmentList, 0) = data;
-        }*/
-        
         if (rB_value != 0) {
                 segment_unmap(memory, 0);
-                                 uint32_t* segment =
- *(uint32_t**)UArray_at(memory->segmentList,
- rB_value);
-                 int length = segment[0];
+                uint32_t* segment = *(uint32_t**)UArray_at(memory->segmentList,
+                                        rB_value);
+                int length = segment[0];
                 segment_map(memory, 0, length);
                 
                 /* copy from segment with ID $r[B] to segment 0 */
                 for (int i = 0; i < length; i++) {
-                        uint32_t value = segment_get(memory, rB_value, i);
+                        uint32_t value = segment[i+1];//segment_get(memory,
+// rB_value, i);
                         segment_put(memory, 0, i, value);
                 }
         }
-        
-        
-        
-        
         return memory->registerList[C];
 }
 

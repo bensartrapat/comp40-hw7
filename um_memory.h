@@ -23,7 +23,6 @@
 typedef struct T *T;
 
 struct T {
-        int progCounter;
         int maxID;              /* biggest segment ID that has been mapped */
         UArray_T segmentList;   /* segmentList is a UArray of UArray */
         uint32_t* registerList;
