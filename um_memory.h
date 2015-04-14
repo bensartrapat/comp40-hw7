@@ -24,7 +24,7 @@ typedef struct T *T;
 
 struct T {
         int maxID;              /* biggest segment ID that has been mapped */
-        UArray_T segmentList;   /* segmentList is a UArray of UArray */
+        uint32_t** segmentList;   /* segmentList is a UArray of UArray */
         uint32_t* segment0;
         uint32_t* registerList;
         Stack_T unmapStack;     /* stack stores unmapped segment IDs to reuse
@@ -46,15 +46,16 @@ extern void segment_map(umMem_T memory, int regID, int length);
 extern void segment_unmap(umMem_T memory, int segID);
 
 /* check if segment has been mapped yet */
-extern bool segment_isEmpty(umMem_T memory, int segID);
+//extern bool segment_isEmpty(umMem_T memory, int segID);
 
 /* return a segment length */
-extern int segment_length(umMem_T memory, int ID);
+//extern int segment_length(umMem_T memory, int ID);
 
 /* get or put an instruction in segment segID and at offset */
-extern uint32_t segment_get(umMem_T memory, int segID, int offset);
+//extern uint32_t segment_get(umMem_T memory, int segID, int offset);
 
-extern void segment_put(umMem_T memory, int segID, int offset, uint32_t value);
+//extern void segment_put(umMem_T memory, int segID, int offset, uint32_t
+//value);
 
 /*----------------------------------------------------------------------------*/
 

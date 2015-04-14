@@ -17,7 +17,7 @@
 #include <math.h>
 
 const uint32_t NOT_ONE = ~0;
-
+/*
 void conditional_move(umMem_T memory, int A, int B, int C)
 {
         if (memory->registerList[C] != 0) {
@@ -109,7 +109,7 @@ uint32_t load_program(umMem_T memory, int B, int C)
                 int length = segment[0];
                 segment_map(memory, 0, length);
                 
-                /* copy from segment with ID $r[B] to segment 0 */
+                 copy from segment with ID $r[B] to segment 0
                 for (int i = 0; i < length; i++) {
                         uint32_t value = segment[i+1];//segment_get(memory,
 // rB_value, i);
@@ -123,3 +123,4 @@ void load_value(umMem_T memory, unsigned A, unsigned value)
 {
         memory->registerList[A] = (uint32_t)value;
 }
+*/
