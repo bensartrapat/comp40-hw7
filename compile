@@ -38,21 +38,6 @@ done
 # link together .o files + libraries to make executable binaries
 # using one case statement per executable binary
 
-
-case $link in
-  all|test_parsing) gcc $FLAGS -o test_parsing test.o \
-                    parsing.o\
-                    $LIBS $CIILIBS  $LFLAGS 
-                  linked=yes ;;
-esac
-
-case $link in
-  all|test_segment) gcc $FLAGS -o test_segment segment_tests.o \
-                    um_memory.o\
-                    $LIBS $CIILIBS  $LFLAGS 
-                  linked=yes ;;
-esac
-
 case $link in
   all|umlab) gcc $FLAGS -o umlab umlab.o umlabwrite.o\
                     $LIBS $CIILIBS  $LFLAGS 
@@ -61,7 +46,7 @@ esac
 
 case $link in
   all|um) gcc $FLAGS -o um headquarter.o emulator.o \
-                    um_memory.o instructions.o parsing.o\
+                    um_memory.o \
                     $LIBS $CIILIBS  $LFLAGS 
                   linked=yes ;;
 esac

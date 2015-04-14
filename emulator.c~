@@ -48,7 +48,7 @@ void execute(umMem_T memory)
 static inline void call_instruction(umMem_T memory, uint32_t* progCounter)
 {
         uint32_t word = segment_get(memory, 0, *progCounter);
-        
+        fprintf(stderr, "after getting INSTRUCTION\n");
         
         int rA = 0, rB = 0, rC = 0;		/* three_instruction value */
         unsigned ra = 0, value = 0;		/* instruction_13 value */
@@ -67,7 +67,8 @@ static inline void call_instruction(umMem_T memory, uint32_t* progCounter)
         
         if (opcode != 12) 
                 (*progCounter) = (*progCounter) + 1;
-        
+        fprintf(stderr, "before switch, inst is: %u, opcode: %u\n", word,
+opcode);
         switch(opcode) {
                 case 0: conditional_move(memory, rA, rB, rC);
                 	return;
