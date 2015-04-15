@@ -42,9 +42,9 @@ umMem_T program_init(FILE *input)
         
         /* initialize umMem_T */
         umMem_T memory = malloc(sizeof(struct umMem_T));
-        memory->maxID = ZERO;
-        //memory->segmentList = UArray_new(HINT, sizeof(UArray_T));
-        memory->segmentList = calloc(HINT, sizeof(uint32_t*));
+        memory->currID = ZERO;
+        memory->maxID = HINT;
+        memory->segmentList = calloc(memory->maxID, sizeof(uint32_t*));
         memory->registerList = calloc(NUM_REGISTER, sizeof(uint32_t));
         memory->unmapStack = Stack_new();
         
@@ -54,7 +54,7 @@ umMem_T program_init(FILE *input)
         }
         
         /*initilize all segments to NULL */
-        for (int i = 0; i < HINT; i++) {
+        for (int i = 0; i < memory->maxID; i++) {
                 memory->segmentList[i] = NULL;
         }
         
@@ -87,24 +87,15 @@ void program_free(umMem_T *memory)
 {
         assert(memory);
         uint32_t* curr = NULL;
-		
-        /* loop to free every segment in segmentList */
-        /*for (int i = 0; i <= (*memory)->maxID; i++) {
-                curr = *(uint32_t **)UArray_at((*memory)->segmentList, i);
-                if (curr != NULL) {
-                        free(curr);
-                }
-        }*/
         
         /* loop to free every segment in segmentList */
-        for (int i = 0; i <= (*memory)->maxID; i++) {
+        for (int i = 0; i <= (*memory)->currID; i++) {
                 curr = (*memory)->segmentList[i];
                 if (curr != NULL) {
                         free(curr);
                 }
         }
         
-        //UArray_free(&((*memory)->segmentList));
         free((*memory)->segmentList);
         free((*memory)->segment0);
         free((*memory)->registerList);
@@ -126,37 +117,21 @@ void segmented_load(umMem_T memory, int A, int B, int C)
                 memory->registerList[A] =
                 memory->segment0[memory->registerList[C]];
         } else {
-//                 uint32_t* segment =
-// *(uint32_t**)UArray_at(memory->segmentList,
-//                                                 memory->registerList[B]);
-               
-memory->registerList[A] = memory->segmentList[memory->registerList[B]]         
-                                     [memory->registerList[C]+1];             
-        
-//                 memory->registerList[A] =
-// memory->segmentList[memory->registerList[C]+1];
+                memory->registerList[A] =
+                memory->segmentList[memory->registerList[B]]        
+                                   [memory->registerList[C]+1];     
         }
 }
 
 void segmented_store(umMem_T memory, int A, int B, int C)
 {
-//         segment_put(memory, memory->registerList[A],memory->registerList[B],
-//                                                 memory->registerList[C]);
-
         if (memory->registerList[A] == 0) {
                 memory->segment0[memory->registerList[B]] =
-memory->registerList[C];
+                                                memory->registerList[C];
         } else {
-                //uint32_t* segment = *(uint32_t
-                //**)UArray_at(memory->segmentList,segID);
-               
-memory->segmentList[memory->registerList[A]][memory->registerList[B]+1] =
-memory->registerList[C];
-                
-//                 assert(segment != NULL);
-//                 assert(offset >= 0 && offset < (int)segment[0]);
-        
-//                 segment[offset+1] = value;
+                memory->segmentList[memory->registerList[A]]
+                                   [memory->registerList[B]+1]
+                = memory->registerList[C];
         }
 
 }
@@ -194,14 +169,48 @@ void halt(umMem_T memory)
 
 void map_segment(umMem_T memory, int B, int C)
 {
+        int regID = B;
+        int length = memory->registerList[C];
+        
+        int newSegID = get_new_ID(memory);
+        memory->registerList[regID] = newSegID;
 
-        segment_map(memory, B, memory->registerList[C]);
+        /* resize if necessary */
+        int new_maxID = memory->maxID * 2;
+        if (newSegID >= memory->maxID) {
+                uint32_t** tempSegList = calloc(new_maxID,
+                sizeof(uint32_t*));                
+                for (int i = 0; i < memory->maxID; i++) {
+                        uint32_t* oldCurr = memory->segmentList[i];
+                        tempSegList[i] = oldCurr;
+                       
+                        if (oldCurr != NULL) { 
+                                oldCurr = NULL;
+                        }
+                }
+                /*initilize all segments to NULL */
+                for (int i = memory->maxID; i < new_maxID; i++) {
+                        tempSegList[i] = NULL;
+                }
+                free(memory->segmentList);
+                memory->maxID = new_maxID;
+                memory->segmentList = tempSegList;
+        } 
+        
+        uint32_t* data = calloc(length+1, UI32SIZE);
+        data[0] = length;
+        memory->segmentList[newSegID] = data;
 }
 
 void unmap_segment(umMem_T memory, int C)
 {
         assert(memory->registerList[C] != 0);
-        segment_unmap(memory, memory->registerList[C]);
+        int segID = memory->registerList[C];
+        store_old_ID(memory, segID);
+        uint32_t* segment = memory->segmentList[segID];
+        assert(segment != NULL);
+        free(segment);
+        memory->segmentList[segID] = NULL;
 }
 
 void output(umMem_T memory, int C)
@@ -228,15 +237,9 @@ uint32_t load_program(umMem_T memory, int B, int C)
         
         if (rB_value != 0) {
                 free(memory->segment0);
-   // uint32_t* segment = *(uint32_t**)UArray_at(memory->segmentList,rB_value);
-   //             int length = segment[0];
-        
                 int length = memory->segmentList[rB_value][0];
-   
                 memory->segment0 = calloc(length, UI32SIZE);
-                
                 for (int i = 0; i<length; i++) {
-//                         memory->segment0[i] = segment[i+1];
                         memory->segment0[i] =
                                         memory->segmentList[rB_value][i+1];
                 }
@@ -250,127 +253,16 @@ void load_value(umMem_T memory, unsigned A, unsigned value)
 }
 
 /*----------------------------------------------------------------------------*/
-void segment_map(umMem_T memory, int regID, int length) 
-{
-        assert(memory);
-//         void map_segment(umMem_T memory, int B, int C)
-
-        /* find an available segment ID to use */
-        int newSegID = get_new_ID(memory);
-        memory->registerList[regID] = newSegID;
-
-        /* resize if necessary */
-        if (newSegID >= memory->maxID) {
-                //UArray_resize(memory->segmentList, newSegID * 2);
-                
-                uint32_t** tempSegList = calloc(memory->maxID * 2 ,
-                sizeof(uint32_t*));                
-               
-                for (int i = 0; i <= memory->maxID; i++) {
-                        uint32_t* oldCurr = memory->segmentList[i];
-                        tempSegList[i] = oldCurr;
-                       
-                        if (oldCurr != NULL) { 
-                                oldCurr = NULL;
-                        }
-                }
-                
-                /*initilize all segments to NULL */
-                for (int i = memory->maxID + 1; i <= memory->maxID * 2; i++) {
-                        tempSegList[i] = NULL;
-                }
-               
-                free(memory->segmentList);
-                memory->segmentList = tempSegList;
-        } 
-        
-        uint32_t* data = calloc(length+1, UI32SIZE);
-        data[0] = length;
-//         *(uint32_t **)UArray_at(memory->segmentList, newSegID) = data;
-        memory->segmentList[newSegID] = data;
-
-}
-
-void segment_unmap(umMem_T memory, int segID) 
-{
-        assert(memory);
-        //assert(segment_isEmpty(memory, segID) == false);
-
-        store_old_ID(memory, segID);
-        
-//         uint32_t* segment = *(uint32_t **)UArray_at(memory->segmentList,
-// segID);
-//         assert(segment != NULL);
-//         free(segment);
-//         *(uint32_t **)UArray_at(memory->segmentList, segID) = NULL;
-        
-        uint32_t* segment = memory->segmentList[segID];
-        assert(segment != NULL);
-        free(segment);
-        memory->segmentList[segID] = NULL;
-        
-}
-
-/*bool segment_isEmpty(umMem_T memory, int segID)
-{
-        assert(memory);
-        
-        if (*(uint32_t **)UArray_at(memory->segmentList, segID) == NULL)
-                return true;
-        return false;
-}
-
-uint32_t segment_get(umMem_T memory, int segID, int offset)
-{
-    	assert(segment_isEmpty(memory, segID) == false);
-        if (segID == 0) {
-                return memory->segment0[offset];
-        } else {
-                uint32_t* segment = *(uint32_t **)UArray_at(memory->segmentList,
-                                                                        segID);
-                assert(segment != NULL);
-                assert(offset >= 0 && offset < (int)segment[0]);
-                return segment[offset+1];
-        }
-}
-
-void segment_put(umMem_T memory, int segID, int offset, uint32_t value)
-{
-        assert(memory);
-
-        if (segID == 0) {
-                memory->segment0[offset] = value;
-        } else {
-                uint32_t* segment = *(uint32_t **)UArray_at(memory->segmentList,
-                                                                        segID);
-                assert(segment != NULL);
-                assert(offset >= 0 && offset < (int)segment[0]);
-        
-                segment[offset+1] = value;
-        }
-
-}
-
-int segment_length(umMem_T memory, int segID)
-{
-        assert(memory);
-        uint32_t* segment = *(uint32_t**)UArray_at(memory->segmentList, segID);
-        if (segment != NULL) {
-                return segment[0];
-        } else { 
-                return 0;
-        }
-}*/
 /* return an ID that can be used to map a segment
  * if unmapStack has available IDs to reuse, return an ID from that
  * else, return an ID to map segment at the end of the segmentList
  */ 
 static int get_new_ID(umMem_T memory)
 {
-        int newID;
+        int newID = 0;
         if (Stack_empty(memory->unmapStack) == 1) { /* 1 means empty */
-                newID = memory->maxID + 1;
-                memory->maxID++;
+                newID = memory->currID + 1;
+                memory->currID++;
         } else {
                 newID = (uintptr_t)Stack_pop(memory->unmapStack);
         }
